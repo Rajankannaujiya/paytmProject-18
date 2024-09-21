@@ -47,9 +47,7 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              name: existingUser.name,
-              // Return email as a nullable string
-              email: existingUser.number ?? null, // Use null or keep it out
+              email: existingUser?.number ?? "example" +Math.floor(Math.random() *100) + "@gmail.com"
             };
           }
           return null; // Return null if password validation fails
@@ -66,8 +64,7 @@ export const authOptions = {
 
           return {
             id: newUser.id.toString(),
-            name: newUser.name ?? "New User",
-            email: newUser.number ?? null, // Use null or keep it out
+            email: newUser.number
           };
         } catch (error) {
           console.error('Error creating user:', error);
