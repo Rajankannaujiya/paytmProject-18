@@ -9,8 +9,8 @@ const credentialsSchema = z.object({
   password: z.string(),
 });
 
-// Create a type for the credentials based on the schema
-type Credentials = z.infer<typeof credentialsSchema>;
+// // Create a type for the credentials based on the schema
+// type Credentials = z.infer<typeof credentialsSchema>;
 
 export const authOptions = {
   providers: [
@@ -22,7 +22,7 @@ export const authOptions = {
       },
 
       // Authorize function with Zod validation and strong typing
-      async authorize(credentials: Credentials | undefined) {
+      async authorize(credentials: any) {
         // Validate the credentials using Zod
         const parsedCredentials = credentialsSchema.safeParse(credentials);
         if (!parsedCredentials.success) {
@@ -47,7 +47,7 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              email: existingUser?.number ?? ""
+              email: existingUser?.number
             };
           }
           return null; // Return null if password validation fails
