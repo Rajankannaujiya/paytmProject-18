@@ -47,7 +47,9 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              email: existingUser?.number
+              name: existingUser.name,
+              // Return email as a nullable string
+              email: existingUser.number ?? null, // Use null or keep it out
             };
           }
           return null; // Return null if password validation fails
@@ -58,13 +60,14 @@ export const authOptions = {
           const newUser = await db.user.create({
             data: {
               number: phone,
-              password: hashedPassword
+              password: hashedPassword,
             }
           });
 
           return {
             id: newUser.id.toString(),
-            email: newUser.number
+            name: newUser.name ?? "New User",
+            email: newUser.number ?? null, // Use null or keep it out
           };
         } catch (error) {
           console.error('Error creating user:', error);
