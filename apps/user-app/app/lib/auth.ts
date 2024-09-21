@@ -47,7 +47,7 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              number: existingUser.number,
+              email: existingUser.number,
             };
           }
           return null; // Return null if password validation fails
@@ -65,7 +65,7 @@ export const authOptions = {
           return {
             id: newUser.id.toString(),
             name: newUser.name,
-            phone: newUser.number
+            email: newUser.number
           };
         } catch (error) {
           console.error('Error creating user:', error);
