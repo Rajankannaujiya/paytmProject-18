@@ -6,7 +6,7 @@ import db from '@repo/db/client'; // Replace with your actual database path
 // Define a Zod schema to validate credentials
 const credentialsSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string(),
+  password: z.string().min(4, "password must be minimum 4 character"),
 });
 
 // // Create a type for the credentials based on the schema
@@ -47,8 +47,9 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              email: existingUser?.number ?? "example" +Math.floor(Math.random() *100) + "@gmail.com"
-            };
+              name: existingUser.name ?? "existing User",
+              email: existingUser.number ?? "existing email"
+          }
           }
           return null; // Return null if password validation fails
         }
@@ -64,8 +65,9 @@ export const authOptions = {
 
           return {
             id: newUser.id.toString(),
+            name: newUser.name ?? "New User" + Math.floor(Math.random()*100),
             email: newUser.number
-          };
+        }
         } catch (error) {
           console.error('Error creating user:', error);
           return null;
