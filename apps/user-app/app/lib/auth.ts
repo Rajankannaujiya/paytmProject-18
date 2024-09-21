@@ -1,89 +1,66 @@
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { NextAuthOptions } from 'next-auth';
-import { z } from 'zod';
-import bcrypt from 'bcrypt';
-import db from '@repo/db/client'; // Replace with your actual database path
+import db from "@repo/db/client";
+import CredentialsProvider from "next-auth/providers/credentials"
+import bcrypt from "bcrypt";
 
-// Define a Zod schema to validate credentials
-const credentialsSchema = z.object({
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string(),
-});
+export const authOptions = {
+    providers: [
+      CredentialsProvider({
+          name: 'Credentials',
+          credentials: {
+            phone: { label: "Phone number", type: "text", placeholder: "1231231231", required: true },
+            password: { label: "Password", type: "password", required: true }
+          },
+          // TODO: User credentials type from next-aut
+          async authorize(credentials: any) {
+            // Do zod validation, OTP validation here
+            const hashedPassword = await bcrypt.hash(credentials.password, 10);
+            const existingUser = await db.user.findFirst({
+                where: {
+                    number: credentials.phone
+                }
+            });
 
-// Create a type for the credentials based on the schema
-type Credentials = z.infer<typeof credentialsSchema>;
-
-export const authOptions:NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        phone: { label: "Phone number", type: "text", placeholder: "1231231231", required: true },
-        password: { label: "Password", type: "password", required: true }
-      },
-
-      // Authorize function with Zod validation and strong typing
-      async authorize(credentials: Credentials | undefined) {
-        // Validate the credentials using Zod
-        const parsedCredentials = credentialsSchema.safeParse(credentials);
-        if (!parsedCredentials.success) {
-          throw new Error(parsedCredentials.error.errors.map(e => e.message).join(', '));
-        }
-
-        const { phone, password } = parsedCredentials.data;
-
-        // Hash the provided password (this is optional based on your logic)
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Find existing user in the database
-        const existingUser = await db.user.findFirst({
-          where: { number: phone }
-        });
-
-        console.log(existingUser)
-        if (existingUser) {
-          // Compare password with hashed password
-          const passwordValidation = await bcrypt.compare(password, existingUser.password);
-          if (passwordValidation) {
-            // Return user object on successful authorization
-            return {
-              id: existingUser.id.toString(),
-              email: existingUser.number,
-            };
-          }
-          return null; // Return null if password validation fails
-        }
-
-        // If no existing user, create a new one
-        try {
-          const newUser = await db.user.create({
-            data: {
-              number: phone,
-              password: hashedPassword
+            if (existingUser) {
+                const passwordValidation = await bcrypt.compare(credentials.password, existingUser.password);
+                if (passwordValidation) {
+                    return {
+                        id: existingUser.id.toString(),
+                        name: existingUser.name,
+                        email: existingUser.number
+                    }
+                }
+                return null;
             }
-          });
 
-          return {
-            id: newUser.id.toString(),
-            name: newUser.name,
-            email: newUser.number
-          };
-        } catch (error) {
-          console.error('Error creating user:', error);
-          return null;
-        }
-      }
-    })
-  ],
+            try {
+                const user = await db.user.create({
+                    data: {
+                        number: credentials.phone,
+                        password: hashedPassword
+                    }
+                });
+            
+                return {
+                    id: user.id.toString(),
+                    name: user.name,
+                    email: user.number
+                }
+            } catch(e) {
+                console.error(e);
+            }
 
+            return null
+          },
+        })
+    ],
     secret: process.env.JWT_SECRET || "secret",
     callbacks: {
-      // TODO: can u fix the type here? Using any is bad
-      async session({ token, session }: any) {
-          session.user.id = token.sub
+        // TODO: can u fix the type here? Using any is bad
+        async session({ token, session }: any) {
+            session.user.id = token.sub
 
-          return session
-      }
-  }
+            return session
+        }
+    }
   }
   
