@@ -47,7 +47,7 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              email: existingUser.email,
+              number: existingUser.number,
             };
           }
           return null; // Return null if password validation fails
