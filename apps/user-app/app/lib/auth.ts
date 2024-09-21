@@ -1,4 +1,5 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { NextAuthOptions } from 'next-auth';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import db from '@repo/db/client'; // Replace with your actual database path
@@ -6,13 +7,13 @@ import db from '@repo/db/client'; // Replace with your actual database path
 // Define a Zod schema to validate credentials
 const credentialsSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string().min(4, "password must be minimum 4 character"),
+  password: z.string(),
 });
 
-// // Create a type for the credentials based on the schema
-// type Credentials = z.infer<typeof credentialsSchema>;
+// Create a type for the credentials based on the schema
+type Credentials = z.infer<typeof credentialsSchema>;
 
-export const authOptions = {
+export const authOptions:NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -22,7 +23,7 @@ export const authOptions = {
       },
 
       // Authorize function with Zod validation and strong typing
-      async authorize(credentials: any) {
+      async authorize(credentials: Credentials | undefined) {
         // Validate the credentials using Zod
         const parsedCredentials = credentialsSchema.safeParse(credentials);
         if (!parsedCredentials.success) {
@@ -47,9 +48,8 @@ export const authOptions = {
             // Return user object on successful authorization
             return {
               id: existingUser.id.toString(),
-              name: existingUser.name ?? "existing User",
-              email: existingUser.number ?? "existing email"
-          }
+              email: existingUser.number,
+            };
           }
           return null; // Return null if password validation fails
         }
@@ -59,15 +59,15 @@ export const authOptions = {
           const newUser = await db.user.create({
             data: {
               number: phone,
-              password: hashedPassword,
+              password: hashedPassword
             }
           });
 
           return {
             id: newUser.id.toString(),
-            name: newUser.name ?? "New User" + Math.floor(Math.random()*100),
+            name: newUser.name,
             email: newUser.number
-        }
+          };
         } catch (error) {
           console.error('Error creating user:', error);
           return null;
@@ -78,12 +78,12 @@ export const authOptions = {
 
     secret: process.env.JWT_SECRET || "secret",
     callbacks: {
-        // TODO: can u fix the type here? Using any is bad
-        async session({ token, session }: any) {
-            session.user.id = token.sub
+      // TODO: can u fix the type here? Using any is bad
+      async session({ token, session }: any) {
+          session.user.id = token.sub
 
-            return session
-        }
-    }
+          return session
+      }
+  }
   }
   
